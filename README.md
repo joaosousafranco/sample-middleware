@@ -1,3 +1,8 @@
+# Overview
+The goal of this repository is to proof that using dropwizard it is possible to dynamically inject REST endpoints to a running API
+
+# Usage
+
 - Open project wiht IntelliJ
 - Use gradlew (Recomended)
 - Open terminal 
