@@ -1,0 +1,96 @@
+buildscript {
+    repositories {
+        jcenter()
+        mavenLocal()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "eu.appsatori:gradle-fatjar-plugin:0.3"
+    }
+}
+
+apply plugin: 'maven'
+apply plugin: 'java'
+apply plugin: 'application'
+apply plugin: 'eu.appsatori.fatjar'
+
+group 'com.jsfsi'
+def versionName = '1.0'
+def buildVersion = project.hasProperty('buildNumber') ? versionName + "." + "$buildNumber" : ""
+version buildVersion
+def environment = project.hasProperty('environment') ? "$environment" : "local"
+
+mainClassName = 'com.jsfsi.BVetMiddleware'
+
+apply from: 'nexus.gradle'
+
+dependencies {
+    // test
+    testCompile 'junit:junit:4.11'
+
+    compile 'com.squareup.retrofit2:retrofit:2.0.0-beta3'
+    compile 'com.squareup.retrofit2:converter-gson:+'
+}
+
+fatJar {
+    classifier 'fat'
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+    exclude 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/*.SF'
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.8'
+}
+
+sourceSets {
+    test {
+        java {
+            srcDirs = ["src/main/java/com/jsfsi/test"]
+        }
+    }
+}
+
+test {
+    testLogging {
+        events 'started', 'passed', 'failed', 'skipped'
+        exceptionFormat = 'full'
+    }
+}
+
+task cleanBuildDir() {
+    delete 'build/libs'
+    mkdir('build/libs')
+}
+
+allprojects {
+    beforeEvaluate {
+        cleanBuildDir
+    }
+}
+
+task copyConfiguration() {
+    doLast {
+        copy {
+            from "${projectDir}/configuration"
+            into "${buildDir}/libs"
+            include "configuration." + "$environment" + ".json"
+            rename "configuration." + "$environment" + ".json", "configuration.json"
+        }
+        copy {
+            from "${projectDir}/scripts"
+            into "${buildDir}/libs"
+            include "*.sh"
+        }
+    }
+}
+
+copyConfiguration.mustRunAfter jar
+assemble.dependsOn copyConfiguration
+
+
+
+run {
+    args 'server', "${buildDir}/libs/configuration.json"
+}

@@ -1,0 +1,81 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.1.2'
+    }
+}
+
+apply plugin: 'maven'
+apply plugin: 'java'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+group 'com.jsfsi'
+def versionName = '1.0'
+def buildVersion = project.hasProperty('buildNumber') ? versionName + "." + "$buildNumber" : ""
+version buildVersion
+
+apply from: 'nexus.gradle'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    // test
+    testCompile 'junit:junit:4.11'
+}
+
+sourceCompatibility = 1.7
+
+compileJava {
+    sourceCompatibility = 1.7
+    targetCompatibility = 1.7
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.8'
+}
+
+// Configure the shadow jar task
+shadowJar {
+    mergeServiceFiles()
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+}
+
+jar {
+    manifest {
+        attributes 'Manifest-Version': buildVersion
+    }
+}
+
+sourceSets {
+    test {
+        java {
+            srcDirs = ["src/main/java/com/jsfsi/sample/extensibility/test"]
+        }
+    }
+}
+
+test {
+    testLogging {
+        events 'started', 'passed', 'failed', 'skipped'
+        exceptionFormat = 'full'
+    }
+}
+
+
+
+task cleanBuildDir() {
+    delete 'build/libs'
+    mkdir('build/libs')
+}
+
+allprojects {
+    beforeEvaluate {
+        cleanBuildDir
+    }
+}

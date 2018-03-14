@@ -1,0 +1,39 @@
+def nexusUrl = "http://nexus.server"
+def nexusUsername = "deployment"
+def nexusPassword = "<Password>"
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: "${nexusUrl}/content/repositories/boommed-sample-modules/localization") {
+              authentication(userName: nexusUsername, password: nexusPassword)
+            }
+            snapshotRepository(url: "${nexusUrl}/content/repositories/boommed-sample-modules/localization") {
+                authentication(userName: nexusUsername, password: nexusPassword)
+            }
+        }
+    }
+}
+
+repositories {
+    maven {
+        url "${nexusUrl}/content/groups/private-repositories"
+        credentials {
+            username nexusUsername
+            password nexusPassword
+        }
+    }
+    maven {
+        url "${nexusUrl}/content/groups/public"
+        credentials {
+            username nexusUsername
+            password nexusPassword
+        }
+    }
+}
+
+dependencies {
+    compile('com.jsfsi:java-lib:+') { changing = true }
+    compile('com.jsfsi:sample-extensibility:+') { changing = true }
+    compile('com.jsfsi:sample-core:+') { changing = true }
+}

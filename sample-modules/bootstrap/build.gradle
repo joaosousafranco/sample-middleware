@@ -1,0 +1,80 @@
+apply plugin: 'maven'
+apply plugin: 'java'
+
+group 'com.jsfsi'
+def versionName = '1.0'
+def buildVersion = project.hasProperty('buildNumber') ? versionName + "." + "$buildNumber" : ""
+version buildVersion
+
+apply from: 'nexus.gradle'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // test
+    testCompile 'junit:junit:4.11'
+
+    compile 'com.squareup.retrofit2:retrofit:2.0.0-beta3'
+    compile 'com.squareup.retrofit2:converter-gson:+'
+}
+
+task writeVersion() {
+    String filePath = "src/main/java/com/jsfsi/sample/modules/bootstrap/Version.java"
+    File file = new File( filePath )
+    String contents = file.getText( 'UTF-8' )
+    contents = contents.replaceAll( "public static final String NAME = \"\";",
+            "public static final String NAME = \"/" + versionName + "\";" )
+    file.delete()
+    new File( filePath ).write( contents, 'UTF-8' )
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.8'
+}
+
+jar {
+    manifest {
+        attributes 'Manifest-Version': buildVersion
+    }
+}
+
+sourceSets {
+    test {
+        java {
+            srcDirs = ["src/main/java/com/jsfsi/sample/modules/bootstrap/test"]
+        }
+    }
+}
+
+test {
+    testLogging {
+        events 'started', 'passed', 'failed', 'skipped'
+        exceptionFormat = 'full'
+    }
+}
+
+task cleanBuildDir() {
+    delete 'build/libs'
+    mkdir('build/libs')
+}
+
+allprojects {
+    beforeEvaluate {
+        cleanBuildDir
+    }
+}
+
+compileJava.dependsOn writeVersion
+
+build.doLast {
+    String filePath = "src/main/java/com/jsfsi/sample/modules/bootstrap/Version.java"
+    File file = new File( filePath )
+    String contents = file.getText( 'UTF-8' )
+    contents = contents.replaceAll("public static final String NAME = \"/" + versionName + "\";",
+            "public static final String NAME = \"\";"
+    )
+    file.delete()
+    new File( filePath ).write( contents, 'UTF-8' )
+}

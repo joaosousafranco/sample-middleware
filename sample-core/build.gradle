@@ -1,0 +1,57 @@
+apply plugin: 'maven'
+apply plugin: 'java'
+
+group 'com.jsfsi'
+def versionName = '1.0'
+def buildVersion = project.hasProperty('buildNumber') ? versionName + "." + "$buildNumber" : ""
+version buildVersion
+
+apply from: 'nexus.gradle'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // test
+    testCompile 'junit:junit:4.11'
+
+    compile 'com.squareup.retrofit2:retrofit:2.0.0-beta3'
+    compile 'com.squareup.retrofit2:converter-gson:+'
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.10'
+}
+
+jar {
+    manifest {
+        attributes 'Manifest-Version': buildVersion
+    }
+}
+
+sourceSets {
+    test {
+        java {
+            srcDirs = ["src/main/java/com/jsfsi/sample/core/test"]
+        }
+    }
+}
+
+test {
+    testLogging {
+        events 'started', 'passed', 'failed', 'skipped'
+        exceptionFormat = 'full'
+    }
+}
+
+task cleanBuildDir() {
+    delete 'build/libs'
+    mkdir('build/libs')
+}
+
+allprojects {
+    beforeEvaluate {
+        cleanBuildDir
+    }
+}
